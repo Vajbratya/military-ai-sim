@@ -1,5 +1,6 @@
 import type { GameConfig, GameState, TurnDecision } from '../types';
 import { getSystemPrompt, getUserPrompt } from './prompts';
+import type { NewsArticle } from './newsFetcher';
 
 interface OpenRouterResponse {
   choices?: Array<{
@@ -82,7 +83,8 @@ function validateAndNormalizeDecision(parsed: any): TurnDecision {
 export async function fetchModelDecision(
   isAlpha: boolean,
   state: GameState,
-  config: GameConfig
+  config: GameConfig,
+  news: NewsArticle[] = []
 ): Promise<TurnDecision> {
   const modelConfig = isAlpha ? config.modelAlpha : config.modelBeta;
   const systemPrompt = getSystemPrompt(isAlpha, config);
@@ -92,7 +94,8 @@ export async function fetchModelDecision(
     state.alpha,
     state.beta,
     state.globalTension,
-    state.history
+    state.history,
+    news
   );
 
   if (!config.apiKey) {

@@ -16,6 +16,8 @@ import type { GameConfig, GameState, ModelType, ScenarioType, TurnDecision } fro
 import { createInitialState, resolveTurn } from './game/engine';
 import { getMockDecision } from './llm/mock';
 import { fetchModelDecision } from './llm/openrouter';
+import { fetchLiveNews } from './llm/newsFetcher';
+import type { NewsArticle } from './llm/newsFetcher';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -581,6 +583,7 @@ export default function App() {
   const [apiKeyInput, setApiKeyInput] = useState(config.apiKey);
   const [terminalLines, setTerminalLines] = useState<Array<{ text: string; type: 'system' | 'danger' | 'success' | 'warning' | 'info'; timestamp: string }>>([]);
   const [threatEvents, setThreatEvents] = useState<ThreatEvent[]>([]);
+  const [liveNews, setLiveNews] = useState<NewsArticle[]>([]);
 
   // Simulation telemetry stats
   const [simulationUptime, setSimulationUptime] = useState(0);
@@ -650,8 +653,8 @@ export default function App() {
       } else {
         // Fetch decisions from live OpenRouter API
         const responses = await Promise.all([
-          fetchModelDecision(true, gameState, config),
-          fetchModelDecision(false, gameState, config)
+          fetchModelDecision(true, gameState, config, liveNews),
+          fetchModelDecision(false, gameState, config, liveNews)
         ]);
         alphaDecision = responses[0];
         betaDecision = responses[1];
@@ -763,16 +766,27 @@ export default function App() {
     };
     setConfig(newConfig);
 
-    const initialState = createInitialState(newConfig);
-    initialState.status = 'playing';
-    setGameState(initialState);
-    setSelectedLogRound(0);
-    setTerminalLines([]);
-    setThreatEvents([]);
-    
-    addTerminalLine(`[LOAD] Preseting simulation: ${preset.name}`, 'system');
-    addTerminalLine(`[SCENARIO] Selected parameters: ${preset.scenario.toUpperCase()}`, 'info');
-    addThreatEvent(0, `Preset loaded: ${preset.name}. Ready for deployment.`, 'SUCCESS');
+    const startWithNews = async () => {
+      setIsFetching(true);
+      addTerminalLine("Initializing OSINT intelligence sweep...", "info");
+      const news = await fetchLiveNews(`${newConfig.alphaHQName} ${newConfig.betaHQName}`);
+      setLiveNews(news);
+      
+      const initialState = createInitialState(newConfig);
+      initialState.status = 'playing';
+      setGameState(initialState);
+      setSelectedLogRound(0);
+      setTerminalLines([]);
+      setThreatEvents([]);
+      
+      addTerminalLine(`[LOAD] Preseting simulation: ${preset.name}`, 'system');
+      addTerminalLine(`[SCENARIO] Selected parameters: ${preset.scenario.toUpperCase()}`, 'info');
+      addThreatEvent(0, `Preset loaded: ${preset.name}. Ready for deployment.`, 'SUCCESS');
+      if (news.length > 0) addTerminalLine(`[OSINT] Downloaded ${news.length} global headlines into AI context.`, 'success');
+      setIsFetching(false);
+    };
+
+    startWithNews();
   };
 
   const handleStartCustomGame = (e: React.FormEvent) => {
@@ -783,15 +797,26 @@ export default function App() {
       return;
     }
 
-    const initialState = createInitialState(config);
-    initialState.status = 'playing';
-    setGameState(initialState);
-    setSelectedLogRound(0);
-    setTerminalLines([]);
-    setThreatEvents([]);
-    
-    addTerminalLine(`[LOAD] Custom simulation parameters accepted.`, 'system');
-    addThreatEvent(0, `Custom simulation active. Models: Alpha (${config.modelAlpha.name}) vs Beta (${config.modelBeta.name})`, 'INFO');
+    const startWithNews = async () => {
+      setIsFetching(true);
+      addTerminalLine("Initializing OSINT intelligence sweep...", "info");
+      const news = await fetchLiveNews(`${config.alphaHQName} ${config.betaHQName}`);
+      setLiveNews(news);
+
+      const initialState = createInitialState(config);
+      initialState.status = 'playing';
+      setGameState(initialState);
+      setSelectedLogRound(0);
+      setTerminalLines([]);
+      setThreatEvents([]);
+      
+      addTerminalLine(`[LOAD] Custom simulation parameters accepted.`, 'system');
+      addThreatEvent(0, `Custom simulation active. Models: Alpha (${config.modelAlpha.name}) vs Beta (${config.modelBeta.name})`, 'INFO');
+      if (news.length > 0) addTerminalLine(`[OSINT] Downloaded ${news.length} global headlines into AI context.`, 'success');
+      setIsFetching(false);
+    };
+
+    startWithNews();
   };
 
   const handleReset = () => {
@@ -1202,6 +1227,23 @@ export default function App() {
                 <span>SECTOR VISUALIZATION FEED: TOC-PRIMARY</span>
                 <span>STATE: {gameState.status.toUpperCase()}</span>
               </div>
+              
+              {liveNews.length > 0 && (
+                <div style={{ background: '#11171d', borderBottom: '1px solid #202b33', color: '#8a9ba8', padding: '6px 14px', fontSize: '0.75rem', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <Globe size={14} style={{ color: '#2965cc' }} />
+                  <span style={{ fontWeight: 700, color: '#2965cc', letterSpacing: '0.5px' }}>OSINT INTELLIGENCE:</span>
+                  <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'inline-block', animation: 'marquee 35s linear infinite' }}>
+                      {liveNews.map((n, i) => (
+                        <span key={i} style={{ marginRight: '50px' }}>
+                          <span style={{ color: '#eb532d', marginRight: '5px' }}>[{new Date(n.pubDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span> 
+                          {n.title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <TacticalMap 
                 alphaTerritory={gameState.alpha.territory}

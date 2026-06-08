@@ -13,103 +13,20 @@ const ACTION_TENSION_IMPACT: Record<ActionType, number> = {
   STRATEGIC_NUKE: 55,
 };
 
+function getHaversineDistanceKm(coord1: [number, number], coord2: [number, number]): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
+  const dLon = (coord2[1] - coord1[1]) * Math.PI / 180;
+  const lat1 = coord1[0] * Math.PI / 180;
+  const lat2 = coord2[0] * Math.PI / 180;
+
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return R * c;
+}
+
 export function createInitialState(config: GameConfig): GameState {
-  let alphaMilitary = 100;
-  let alphaTech = 100;
-  let alphaStability = 100;
-  let alphaEconomy = 100;
-  let alphaAirDefense = 100;
-  let alphaAlliedSupport = 100;
-  
-  let betaMilitary = 100;
-  let betaTech = 100;
-  let betaStability = 100;
-  let betaEconomy = 100;
-  let betaAirDefense = 100;
-  let betaAlliedSupport = 100;
-  
-  let alphaTerritory = 50;
-  let betaTerritory = 50;
-  let initialTension = 15;
-
-  const isTaiwan = config.alphaHQName.includes('Taipei') || config.scenario === 'tech-vs-army';
-  const isSuwalki = config.alphaHQName.includes('Warsaw');
-  const isKorea = config.alphaHQName.includes('Seoul') || config.scenario === 'regime-survival';
-  const isCrimea = config.alphaHQName.includes('Kyiv') || config.alphaHQName.includes('Central Ops');
-
-  if (isTaiwan) {
-    // US/Taiwan Command: High tech, high Air Defense, high Allied Support, smaller army
-    alphaMilitary = 65;
-    alphaTech = 130;
-    alphaStability = 95;
-    alphaEconomy = 85;
-    alphaAirDefense = 95; // Integrated Patriot Batteries
-    alphaAlliedSupport = 90;
-
-    // China Naval Command: Large military, strong economy, solid air defense, low allied support
-    betaMilitary = 135;
-    betaTech = 95;
-    betaStability = 95;
-    betaEconomy = 98;
-    betaAirDefense = 75;
-    betaAlliedSupport = 25;
-    initialTension = 20;
-  } else if (isSuwalki) {
-    // NATO / Poland corridor
-    alphaMilitary = 85;
-    alphaTech = 110;
-    alphaStability = 90;
-    alphaEconomy = 80;
-    alphaAirDefense = 85;
-    alphaAlliedSupport = 95;
-
-    // Russian forces
-    betaMilitary = 115;
-    betaTech = 90;
-    betaStability = 85;
-    betaEconomy = 65;
-    betaAirDefense = 80;
-    betaAlliedSupport = 30;
-    initialTension = 25;
-  } else if (isKorea) {
-    // South Korea vs North Korea
-    alphaMilitary = 90;
-    alphaTech = 115;
-    alphaStability = 90;
-    alphaEconomy = 92;
-    alphaAirDefense = 85;
-    alphaAlliedSupport = 85;
-
-    // North Korea: Massive military, nuclear arsenals, weak economy, poor stability
-    betaMilitary = 125;
-    betaTech = 65;
-    betaStability = 65;
-    betaEconomy = 30;
-    betaAirDefense = 55;
-    betaAlliedSupport = 10;
-    initialTension = 45;
-  } else if (isCrimea) {
-    // Ukraine vs Russia
-    alphaMilitary = 75;
-    alphaTech = 95;
-    alphaStability = 85;
-    alphaEconomy = 60;
-    alphaAirDefense = 70;
-    alphaAlliedSupport = 95;
-
-    // Russia Black Sea
-    betaMilitary = 95;
-    betaTech = 95;
-    betaStability = 80;
-    betaEconomy = 75;
-    betaAirDefense = 80;
-    betaAlliedSupport = 25;
-    initialTension = 30;
-  }
-
-  const alpha: CountryState = {
-    name: 'Country Alpha',
-    modelName: config.modelAlpha.name,
     military: alphaMilitary,
     tech: alphaTech,
     territory: alphaTerritory,
@@ -160,14 +77,59 @@ export function resolveTurn(
   const betaBefore = { ...currentState.beta };
   const tensionBefore = currentState.globalTension;
 
-  const alphaAct = alphaDecision.actualAction;
-  const betaAct = betaDecision.actualAction;
-
   const events: string[] = [];
+
+  let alphaAct = alphaDecision.actualAction;
+  let betaAct = betaDecision.actualAction;
+
+  // --- ESCALATION CONSTRAINTS (ICBM RESTRICTIONS) ---
+  const validateNuclearAction = (action: ActionType, isAlpha: boolean) => {
+    if (action === 'STRATEGIC_NUKE') {
+      const ownStability = isAlpha ? alphaBefore.stability : betaBefore.stability;
+      const nukeAlreadyLaunched = alphaBefore.nukeLaunched || betaBefore.nukeLaunched;
+      // You cannot launch an ICBM unless tension > 80, stability < 15, or someone already launched nukes
+      if (tensionBefore <= 80 && ownStability >= 15 && !nukeAlreadyLaunched) {
+        events.push(`[SYSTEM_BLOCK] ${isAlpha ? alphaBefore.name : betaBefore.name} attempted STRATEGIC_NUKE but was blocked by safety protocols. Downgrading to NUCLEAR_WARNING.`);
+        return 'NUCLEAR_WARNING' as ActionType;
+      }
+    }
+    
+    if (action === 'TACTICAL_NUKE' || action === 'STRATEGIC_NUKE') {
+      // Check Haversine geographic range
+      const siloCoords = isAlpha ? config.alphaSiloCoords : config.betaSiloCoords;
+      const targetCoords = isAlpha ? config.betaHQCoords : config.alphaHQCoords;
+      
+      if (siloCoords && targetCoords) {
+        const distanceKm = getHaversineDistanceKm(siloCoords, targetCoords);
+        if (action === 'TACTICAL_NUKE' && distanceKm > 1500) {
+          events.push(`[SYSTEM_BLOCK] ${isAlpha ? alphaBefore.name : betaBefore.name} attempted TACTICAL_NUKE but target is out of range (${Math.round(distanceKm)}km > 1500km). Downgrading to NUCLEAR_WARNING.`);
+          return 'NUCLEAR_WARNING' as ActionType;
+        }
+      }
+    }
+    return action;
+  };
+
+  alphaAct = validateNuclearAction(alphaAct, true);
+  betaAct = validateNuclearAction(betaAct, false);
+  
+  // Update the decision object if we downgraded their action so the log is accurate
+  if (alphaAct !== alphaDecision.actualAction) alphaDecision.actualAction = alphaAct;
+  if (betaAct !== betaDecision.actualAction) betaDecision.actualAction = betaAct;
 
   // Clones to update
   const alphaAfter = { ...alphaBefore };
   const betaAfter = { ...betaBefore };
+
+  // Deception Penalties
+  if (alphaDecision.declaredAction !== alphaAct) {
+    alphaAfter.alliedSupport = Math.max(0, alphaAfter.alliedSupport - 15);
+    events.push(`[DECEPTION] ${alphaAfter.name} broke trust. Allied Support drops by 15%.`);
+  }
+  if (betaDecision.declaredAction !== betaAct) {
+    betaAfter.alliedSupport = Math.max(0, betaAfter.alliedSupport - 15);
+    events.push(`[DECEPTION] ${betaAfter.name} broke trust. Allied Support drops by 15%.`);
+  }
 
   // 1. Check for deception (Diplomatic fallout)
   const alphaLied = alphaDecision.declaredAction !== alphaDecision.actualAction;

@@ -1,10 +1,21 @@
-export type ModelType = 'chatgpt' | 'claude' | 'gemini' | 'custom';
-export type ScenarioType = 'tech-vs-army' | 'regime-survival' | 'border-skirmish';
+export type ModelType = 'chatgpt' | 'claude' | 'gemini' | 'custom' | 'human';
+export type ScenarioType = 'tech-vs-army' | 'regime-survival' | 'border-skirmish' | 'custom-sandbox';
 
 export interface ModelConfig {
   type: ModelType;
   name: string;
   modelId: string;
+}
+
+export interface BaseStats {
+  military: number;
+  tech: number;
+  territory: number;
+  stability: number;
+  economy: number;
+  airDefense: number;
+  alliedSupport: number;
+  nukes: number;
 }
 
 export interface GameConfig {
@@ -16,12 +27,17 @@ export interface GameConfig {
   maxRounds: number;
   apiKey: string;
   useMock: boolean;
+  customSystemPrompt: string;
+  alphaStartStats: BaseStats;
+  betaStartStats: BaseStats;
   mapCenter: [number, number];
   mapZoom: number;
   alphaHQName: string;
   alphaHQCoords: [number, number];
   betaHQName: string;
   betaHQCoords: [number, number];
+  alphaSiloCoords?: [number, number];
+  betaSiloCoords?: [number, number];
 }
 
 export type ActionType =
