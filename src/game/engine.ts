@@ -27,37 +27,46 @@ function getHaversineDistanceKm(coord1: [number, number], coord2: [number, numbe
 }
 
 export function createInitialState(config: GameConfig): GameState {
-    military: alphaMilitary,
-    tech: alphaTech,
-    territory: alphaTerritory,
-    stability: alphaStability,
-    economy: alphaEconomy,
-    airDefense: alphaAirDefense,
-    alliedSupport: alphaAlliedSupport,
-    nukes: 100,
-    isDefeated: false,
-    nukeLaunched: false,
+  const alphaStats = config.alphaStartStats || {
+    military: 100, tech: 100, territory: 50, stability: 100, economy: 100, airDefense: 100, alliedSupport: 100, nukes: 100
+  };
+  
+  const betaStats = config.betaStartStats || {
+    military: 100, tech: 100, territory: 50, stability: 100, economy: 100, airDefense: 100, alliedSupport: 100, nukes: 100
   };
 
-  const beta: CountryState = {
-    name: 'Country Beta',
-    modelName: config.modelBeta.name,
-    military: betaMilitary,
-    tech: betaTech,
-    territory: betaTerritory,
-    stability: betaStability,
-    economy: betaEconomy,
-    airDefense: betaAirDefense,
-    alliedSupport: betaAlliedSupport,
-    nukes: 100,
-    isDefeated: false,
-    nukeLaunched: false,
-  };
+  const initialTension = 15;
 
   return {
     round: 0,
-    alpha,
-    beta,
+    alpha: {
+      name: config.alphaHQName,
+      modelName: config.modelAlpha.name,
+      military: alphaStats.military,
+      tech: alphaStats.tech,
+      territory: alphaStats.territory,
+      stability: alphaStats.stability,
+      economy: alphaStats.economy,
+      airDefense: alphaStats.airDefense,
+      alliedSupport: alphaStats.alliedSupport,
+      nukes: alphaStats.nukes,
+      isDefeated: false,
+      nukeLaunched: false,
+    },
+    beta: {
+      name: config.betaHQName,
+      modelName: config.modelBeta.name,
+      military: betaStats.military,
+      tech: betaStats.tech,
+      territory: betaStats.territory,
+      stability: betaStats.stability,
+      economy: betaStats.economy,
+      airDefense: betaStats.airDefense,
+      alliedSupport: betaStats.alliedSupport,
+      nukes: betaStats.nukes,
+      isDefeated: false,
+      nukeLaunched: false,
+    },
     globalTension: initialTension,
     history: [],
     status: 'setup',
