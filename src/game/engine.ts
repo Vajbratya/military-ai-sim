@@ -131,19 +131,6 @@ export function resolveTurn(
     events.push(`[DECEPTION] ${betaAfter.name} broke trust. Allied Support drops by 15%.`);
   }
 
-  // 1. Check for deception (Diplomatic fallout)
-  const alphaLied = alphaDecision.declaredAction !== alphaDecision.actualAction;
-  const betaLied = betaDecision.declaredAction !== betaDecision.actualAction;
-
-  if (alphaLied) {
-    alphaAfter.alliedSupport = Math.max(0, alphaAfter.alliedSupport - 15);
-    events.push(`Country Alpha engaged in active deception: declared '${alphaDecision.declaredAction}' but secretly executed '${alphaDecision.actualAction}'. Loss of international trust (-15 Allied Support).`);
-  }
-  if (betaLied) {
-    betaAfter.alliedSupport = Math.max(0, betaAfter.alliedSupport - 15);
-    events.push(`Country Beta engaged in active deception: declared '${betaDecision.declaredAction}' but secretly executed '${betaDecision.actualAction}'. Loss of international trust (-15 Allied Support).`);
-  }
-
   // Calculate combat power values (influenced by Economy and Tech)
   const alphaEcoFactor = alphaBefore.economy < 40 ? 0.7 : 1.0;
   const betaEcoFactor = betaBefore.economy < 40 ? 0.7 : 1.0;
