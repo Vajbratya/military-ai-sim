@@ -1,0 +1,1262 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Palantir Blueprint.js Palette */
+  --bp-bg-page: #10161a;
+  --bp-bg-panel: #182026;
+  --bp-bg-card: #202b33;
+  --bp-bg-input: #293742;
+  
+  --bp-border-color: rgba(19, 124, 189, 0.18);
+  --bp-border-focus: #137cbd;
+  
+  --bp-cobalt-blue: #137cbd;
+  --bp-cobalt-glow: rgba(19, 124, 189, 0.3);
+  
+  --bp-forest-green: #0f9960;
+  --bp-amber-orange: #d9822b;
+  --bp-crimson-red: #db3737;
+  
+  --bp-text-primary: #f5f8fa;
+  --bp-text-secondary: #a7b6c2;
+  --bp-text-muted: #5c7080;
+  
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+  
+  --shadow-blueprint: 0 0 0 1px rgba(16, 22, 26, 0.4), 0 2px 4px rgba(16, 22, 26, 0.4), 0 8px 24px rgba(16, 22, 26, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bp-bg-page);
+  color: var(--bp-text-primary);
+  min-height: 100vh;
+  overflow: hidden;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bp-bg-page);
+}
+::-webkit-scrollbar-thumb {
+  background: #30404d;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bp-text-muted);
+}
+
+/* Core Layouts */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Palantir Styled Panels / Cards */
+.bp-card {
+  background: var(--bp-bg-panel);
+  border: 1px solid var(--bp-border-color);
+  border-radius: 3px;
+  padding: 14px;
+  box-shadow: var(--shadow-blueprint);
+  position: relative;
+}
+
+/* Targeting Corner Brackets */
+.bp-card::before, .bp-card::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: rgba(19, 124, 189, 0.35);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.bp-card::before {
+  top: -1px; left: -1px;
+  border-width: 1px 0 0 1px;
+}
+
+.bp-card::after {
+  bottom: -1px; right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+/* Top Navigation Bar */
+.bp-navbar {
+  background: var(--bp-bg-panel);
+  border-bottom: 1px solid var(--bp-border-color);
+  height: 50px;
+  min-height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(16, 22, 26, 0.15);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.system-title {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--bp-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.system-tag {
+  background: rgba(19, 124, 189, 0.15);
+  color: var(--bp-cobalt-blue);
+  border: 1px solid rgba(19, 124, 189, 0.3);
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+}
+
+.navbar-center-telemetry {
+  display: flex;
+  gap: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--bp-text-secondary);
+}
+
+.telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telemetry-dot-active {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--bp-forest-green);
+  box-shadow: 0 0 6px var(--bp-forest-green);
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* High-density Buttons */
+.bp-btn {
+  font-family: var(--font-body);
+  background: linear-gradient(to bottom, #394b59, #2c3b47);
+  border: 1px solid rgba(16, 22, 26, 0.4);
+  border-bottom-color: rgba(16, 22, 26, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--bp-text-primary);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bp-btn:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #485b6b, #384a56);
+  border-color: rgba(16, 22, 26, 0.6);
+}
+
+.bp-btn-primary {
+  background: linear-gradient(to bottom, #137cbd, #106ba3);
+  border-color: rgba(16, 22, 26, 0.4);
+  color: #ffffff;
+}
+
+.bp-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #1d8fd8, #137cbd);
+}
+
+.bp-btn-danger {
+  background: linear-gradient(to bottom, #db3737, #a82222);
+  border-color: rgba(16, 22, 26, 0.4);
+  color: #ffffff;
+}
+
+.bp-btn-danger:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #ec4c4c, #db3737);
+}
+
+.bp-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.bp-btn-icon-only {
+  padding: 6px;
+}
+
+/* Operations Dashboard Grid */
+.ops-dashboard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left Configuration Sidebar */
+.ops-sidebar {
+  width: 330px;
+  background: var(--bp-bg-panel);
+  border-right: 1px solid var(--bp-border-color);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  height: 100%;
+}
+
+.ops-sidebar-collapsed {
+  width: 0px;
+  border-right: none;
+}
+
+.sidebar-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bp-border-color);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bp-text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Custom Config Setup */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.input-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--bp-text-secondary);
+  text-transform: uppercase;
+}
+
+.bp-select, .bp-text {
+  font-family: var(--font-body);
+  background: var(--bp-bg-input);
+  border: 1px solid rgba(16, 22, 26, 0.4);
+  box-shadow: inset 0 1px 1px rgba(16, 22, 26, 0.2);
+  color: var(--bp-text-primary);
+  padding: 8px 10px;
+  border-radius: 3px;
+  outline: none;
+  font-size: 0.8rem;
+  transition: border-color var(--transition-speed);
+}
+
+.bp-select:focus, .bp-text:focus {
+  border-color: var(--bp-border-focus);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--bp-text-secondary);
+  user-select: none;
+}
+
+.checkbox-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(16, 22, 26, 0.6);
+  background: var(--bp-bg-input);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox-input:checked {
+  background-color: var(--bp-cobalt-blue);
+  border-color: var(--bp-cobalt-blue);
+}
+
+.checkbox-input:checked::after {
+  content: "✔";
+  position: absolute;
+  top: -2px; left: 1px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Preset Cards */
+.bp-presets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bp-preset-item {
+  background: var(--bp-bg-card);
+  border: 1px solid var(--bp-border-color);
+  border-radius: 3px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  position: relative;
+}
+
+.bp-preset-item::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 3px;
+  background-color: transparent;
+  transition: background-color var(--transition-speed);
+}
+
+.bp-preset-item:hover {
+  background: #293742;
+  border-color: rgba(19, 124, 189, 0.4);
+}
+
+.bp-preset-item:hover::before {
+  background-color: var(--bp-cobalt-blue);
+}
+
+.bp-preset-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--bp-text-primary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.bp-preset-desc {
+  font-size: 0.7rem;
+  color: var(--bp-text-secondary);
+  line-height: 1.3;
+}
+
+/* Sidebar Toggle handle on map edge */
+.sidebar-toggle-handle {
+  position: absolute;
+  left: 330px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 48px;
+  background: var(--bp-bg-panel);
+  border: 1px solid var(--bp-border-color);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 90;
+  color: var(--bp-text-secondary);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-toggle-handle:hover {
+  color: var(--bp-text-primary);
+  background: #202b33;
+}
+
+/* Center TOC Map & Logs view */
+.ops-center {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bp-bg-page);
+}
+
+.ops-center-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 1000px) {
+  .ops-center-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
+}
+
+/* Telemetry Map Area */
+.ops-map-area {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.telemetry-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--bp-text-secondary);
+  border-bottom: 1px solid var(--bp-border-color);
+  padding-bottom: 6px;
+}
+
+/* Palantir Tactical Telemetry Map */
+.bp-map-container {
+  width: 100%;
+  height: 580px;
+  background-color: #0b0f14;
+  border: 1px solid var(--bp-border-color);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+}
+
+/* Leaflet container override */
+.bp-map-container .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #0b0f14;
+}
+
+/* Palantir Dark Satellite Map CSS Filter */
+.bp-map-container .leaflet-tile-container {
+}
+
+/* Hide default Leaflet controls */
+.bp-map-container .leaflet-control-container {
+  display: none !important;
+}
+
+.bp-map-coordinate-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: 
+    linear-gradient(rgba(19, 124, 189, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(19, 124, 189, 0.08) 1px, transparent 1px);
+  background-size: 25px 25px;
+  pointer-events: none;
+  z-index: 12;
+}
+
+/* Coordinate Ticks along the borders */
+.bp-map-ticks {
+  position: absolute;
+  top: 3px; left: 6px; right: 6px; bottom: 3px;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--bp-text-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Dynamic Border line */
+.bp-map-border {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--bp-cobalt-blue);
+  box-shadow: 0 0 8px var(--bp-cobalt-glow);
+  z-index: 10;
+  transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bp-map-border::before {
+  content: "SECTOR DEVOLUTION LIMIT";
+  position: absolute;
+  top: 10px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--bp-text-secondary);
+  background: var(--bp-bg-panel);
+  border: 1px solid var(--bp-border-color);
+  padding: 1px 4px;
+  white-space: nowrap;
+}
+
+/* Background Gradients */
+.bp-map-territory {
+  position: absolute;
+  top: 0; bottom: 0;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bp-map-alpha-bg {
+  left: 0;
+  background: linear-gradient(90deg, rgba(0, 255, 204, 0.015) 0%, transparent 100%);
+}
+
+.bp-map-beta-bg {
+  right: 0;
+  background: linear-gradient(270deg, rgba(255, 51, 102, 0.015) 0%, transparent 100%);
+}
+
+/* Tactical HQ Nodes */
+.bp-hq-node {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bp-hq-alpha {
+  left: 10%;
+  color: var(--color-alpha);
+  filter: drop-shadow(0 0 4px var(--color-alpha-glow));
+}
+
+.bp-hq-beta {
+  right: 10%;
+  color: var(--color-beta);
+  filter: drop-shadow(0 0 4px var(--color-beta-glow));
+}
+
+.bp-hq-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  position: relative;
+  background-color: var(--bp-bg-page);
+}
+
+.bp-hq-circle::after {
+  content: "";
+  position: absolute;
+  top: -6px; left: -6px; bottom: -6px; right: -6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: pulse-ring 2s infinite linear;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.bp-hq-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+  background: rgba(16, 22, 26, 0.7);
+  padding: 1px 4px;
+  border: 1px solid var(--bp-border-color);
+  border-radius: 2px;
+}
+
+/* Telemetry Map Vector Assets */
+.bp-map-unit {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  background: var(--bp-bg-panel);
+  border: 1px solid var(--bp-border-color);
+  z-index: 4;
+  transition: left 0.8s ease, top 0.8s ease, transform var(--transition-speed);
+}
+
+.bp-unit-alpha {
+  border-color: var(--color-alpha);
+  color: var(--color-alpha);
+}
+
+.bp-unit-beta {
+  border-color: var(--color-beta);
+  color: var(--color-beta);
+}
+
+/* Projectile & Movement animations using dynamic inline coordinates */
+.bp-map-unit.anim-tank-alpha {
+  animation: tank-roll-to-beta 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.bp-map-unit.anim-tank-beta {
+  animation: tank-roll-to-alpha 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.bp-map-unit.anim-jet-alpha {
+  animation: jet-fly-to-beta 2.2s ease-in-out forwards;
+}
+
+.bp-map-unit.anim-jet-beta {
+  animation: jet-fly-to-alpha 2.2s ease-in-out forwards;
+}
+
+.bp-map-unit.anim-missile-alpha {
+  animation: missile-arc-to-beta 2.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.bp-map-unit.anim-missile-beta {
+  animation: missile-arc-to-alpha 2.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+/* Dynamic Keyframes using CSS Custom Properties */
+@keyframes tank-roll-to-beta {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.8);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(360deg) scale(0.8);
+  }
+}
+
+@keyframes tank-roll-to-alpha {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.8);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(-360deg) scale(0.8);
+  }
+}
+
+@keyframes jet-fly-to-beta {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) scale(0.6) rotate(15deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3) rotate(0deg);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.6) rotate(-15deg);
+  }
+}
+
+@keyframes jet-fly-to-alpha {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) scale(0.6) rotate(-15deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3) rotate(0deg);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.6) rotate(15deg);
+  }
+}
+
+@keyframes missile-arc-to-beta {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(-35deg) scale(0.7);
+  }
+  50% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.5);
+    top: calc(var(--start-y) - 120px);
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.3);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(35deg) scale(0.7);
+  }
+}
+
+@keyframes missile-arc-to-alpha {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(35deg) scale(0.7);
+  }
+  50% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.5);
+    top: calc(var(--start-y) - 120px);
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.3);
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(-35deg) scale(0.7);
+  }
+}
+
+/* SVG Cyber Attack Dash Flow */
+.bp-map-overlay-svg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.cyber-line-alpha {
+  stroke: var(--color-alpha);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  animation: cyber-dash-flow 1.5s linear infinite;
+  filter: drop-shadow(0 0 4px var(--color-alpha-glow));
+}
+
+.cyber-line-beta {
+  stroke: var(--color-beta);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  animation: cyber-dash-flow -1.5s linear infinite;
+  filter: drop-shadow(0 0 4px var(--color-beta-glow));
+}
+
+@keyframes cyber-dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* Peace shield */
+.bp-peace-shield {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  border: 1px dashed var(--bp-forest-green);
+  background: radial-gradient(circle, rgba(15, 153, 96, 0.1) 0%, transparent 75%);
+  z-index: 6;
+  animation: peace-shield-glow 2s ease-in-out infinite alternate;
+}
+
+/* Deception leak tag */
+.bp-deception-tag {
+  position: absolute;
+  background: var(--bp-amber-orange);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  z-index: 12;
+  animation: deception-tag-flicker 2.1s ease-in-out forwards;
+}
+
+/* Explosions */
+.bp-explosion {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff5f6d 0%, rgba(239, 68, 68, 0.3) 60%, transparent 100%);
+  border: 1px solid #ff3366;
+  z-index: 8;
+  animation: bomb-explosion 0.8s ease-out forwards;
+}
+
+.bp-shockwave {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  z-index: 9;
+  animation: nuke-shockwave 1.8s ease-out forwards;
+}
+
+/* Center Bottom: Intel Log Viewers */
+.bp-intel-panel {
+  background: var(--bp-bg-panel);
+  border-top: 1px solid var(--bp-border-color);
+  padding: 12px 20px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.intel-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--bp-text-secondary);
+}
+
+.intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .intel-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+.intel-column {
+  background: #10161a;
+  border: 1px solid rgba(19, 124, 189, 0.1);
+  padding: 10px;
+  border-radius: 2px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #39cc87; /* terminal teal */
+}
+
+.intel-column-beta {
+  color: #ff7597; /* terminal rose */
+}
+
+.intel-meta {
+  color: var(--bp-text-secondary);
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+/* Right Analytics Sidebar */
+.ops-analytics {
+  padding: 16px;
+  border-left: 1px solid var(--bp-border-color);
+  background: var(--bp-bg-panel);
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analytics-header {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bp-text-secondary);
+  border-bottom: 1px solid var(--bp-border-color);
+  padding-bottom: 8px;
+}
+
+/* State stats list */
+.stat-panel-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analytics-bar-bg {
+  background: var(--bp-bg-input);
+  height: 5px;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.analytics-bar-fill {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.fill-alpha { background-color: var(--color-alpha); }
+.fill-beta { background-color: var(--color-beta); }
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--bp-text-secondary);
+}
+
+/* Threat Timeline Tickers */
+.bp-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.timeline-event-card {
+  background: var(--bp-bg-card);
+  border: 1px solid var(--bp-border-color);
+  border-left-width: 3px;
+  border-radius: 2px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  position: relative;
+}
+
+.event-CRITICAL { border-left-color: var(--bp-crimson-red); }
+.event-WARNING { border-left-color: var(--bp-amber-orange); }
+.event-INFO { border-left-color: var(--bp-cobalt-blue); }
+.event-SUCCESS { border-left-color: var(--bp-forest-green); }
+
+.timeline-event-header {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--bp-text-muted);
+  margin-bottom: 3px;
+}
+
+.timeline-event-body {
+  color: var(--bp-text-primary);
+  line-height: 1.3;
+}
+
+/* Game Over overlay screen */
+.bp-gameover-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(16, 22, 26, 0.95);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  animation: fade-in-go 0.4s ease-out;
+}
+
+.bp-gameover-content {
+  width: 100%;
+  max-width: 550px;
+  text-align: center;
+  padding: 30px;
+}
+
+.bp-gameover-title {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-top: 14px;
+  text-transform: uppercase;
+}
+
+.bp-gameover-desc {
+  font-size: 0.85rem;
+  color: var(--bp-text-secondary);
+  line-height: 1.5;
+  margin: 16px 0;
+}
+
+.bp-gameover-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.bp-gameover-stat-card {
+  background: var(--bp-bg-input);
+  border: 1px solid var(--bp-border-color);
+  padding: 12px;
+  border-radius: 2px;
+  text-align: left;
+}
+
+/* Alert border overlays */
+.nuclear-screen-alert {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 4px solid var(--bp-crimson-red);
+  pointer-events: none;
+  z-index: 999;
+  animation: alert-border-flicker 0.4s infinite alternate;
+}
+
+@keyframes alert-border-flicker {
+  0% { opacity: 0.1; }
+  100% { opacity: 0.8; }
+}
+
+.gameover-nuke-flicker {
+  animation: nuke-screen-shake 0.8s ease-out;
+}
+
+/* Conic Conical Radar Sweep Effect */
+.radar-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg at 50% 50%, rgba(19, 124, 189, 0.05) 0deg, rgba(19, 124, 189, 0) 120deg);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  animation: radar-rotate 8s linear infinite;
+}
+
+@keyframes radar-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Radar Rings */
+.radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(19, 124, 189, 0.04);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+.radar-ring-1 { width: 200px; height: 200px; }
+.radar-ring-2 { width: 400px; height: 400px; }
+.radar-ring-3 { width: 600px; height: 600px; }
+
+/* SVG Map Overlay */
+.bp-map-overlay-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Missile trajectory arcs with flowing dash offset */
+.missile-trajectory-arc {
+  animation: stroke-flow 1.5s linear infinite;
+  filter: drop-shadow(0 0 4px var(--bp-crimson-red));
+}
+
+.jet-trajectory {
+  animation: stroke-flow 2s linear infinite;
+  filter: drop-shadow(0 0 3px var(--bp-cobalt-blue));
+}
+
+@keyframes stroke-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* Glowing tactical HQ defense shield when active */
+.hq-shield-active {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, rgba(0, 240, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  animation: shield-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes shield-pulse {
+  0% {
+    width: 60px; height: 60px;
+    opacity: 0.3;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  }
+  100% {
+    width: 90px; height: 90px;
+    opacity: 0.7;
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+  }
+}
+
+/* Floating HUD action tags */
+.hud-strike-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  background: rgba(11, 15, 20, 0.9);
+  border: 1px solid var(--bp-border-color);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 15;
+  letter-spacing: 0.5px;
+  animation: label-blink 0.8s infinite alternate;
+}
+
+.alpha-strike-text {
+  border-color: var(--color-alpha);
+  color: var(--color-alpha);
+  box-shadow: 0 0 8px rgba(19, 124, 189, 0.3);
+}
+
+.beta-strike-text {
+  border-color: var(--color-beta);
+  color: var(--color-beta);
+  box-shadow: 0 0 8px rgba(219, 55, 55, 0.3);
+}
+
+@keyframes label-blink {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; filter: brightness(1.2); }
+}
+
+/* Blinking threat beacons on map */
+.tactical-beacon {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.beacon-red {
+  background: var(--bp-crimson-red);
+  box-shadow: 0 0 8px var(--bp-crimson-red);
+  animation: beacon-ping 1.5s infinite;
+}
+
+@keyframes beacon-ping {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
+}
+
+/* CRT Scanlines and Vignette for Palantir FOV */
+.vignette-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.crt-scanlines {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.1) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 21;
+  opacity: 0.4;
+  animation: scanlines-scroll 10s linear infinite;
+}
+
+@keyframes scanlines-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+/* Screen Flicker on heavy hits */
+.screen-flicker {
+  animation: crt-flicker 0.15s ease-in-out 3;
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.5) hue-rotate(-10deg); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+.bp-map-container .leaflet-container {
+  z-index: 1 !important;
+}
+
+.bp-map-coordinate-overlay {
+  z-index: 12 !important;
+}
+
+.bp-map-overlay-svg {
+  z-index: 15 !important;
+}
+
+.vignette-overlay {
+  z-index: 20 !important;
+}
+
+.crt-scanlines {
+  z-index: 21 !important;
+}
