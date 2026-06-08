@@ -22,6 +22,70 @@ import type { NewsArticle } from './llm/newsFetcher';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import type { ActionType } from './types';
+
+const HumanActionPanel = ({
+  side,
+  onSubmit
+}: {
+  side: 'alpha' | 'beta';
+  onSubmit: (decision: TurnDecision) => void;
+}) => {
+  const [declared, setDeclared] = useState<ActionType>('STATUS_QUO');
+  const [actual, setActual] = useState<ActionType>('STATUS_QUO');
+  
+  return (
+    <div className="bp-card" style={{ padding: '15px', background: 'var(--bp-bg-page)', borderTop: `2px solid var(--color-${side})`, marginBottom: '10px' }}>
+      <h3 style={{ color: `var(--color-${side})`, marginTop: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <ShieldAlert size={16} /> HUMAN COMMANDER OVERRIDE: {side.toUpperCase()}
+      </h3>
+      <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+        <div style={{ flex: 1 }}>
+          <label className="input-label" style={{ color: '#8a9ba8' }}>Declared Action (Public Stance)</label>
+          <select className="bp-select" value={declared} onChange={e => setDeclared(e.target.value as ActionType)}>
+            <option value="DE_ESCALATE">DE_ESCALATE</option>
+            <option value="STATUS_QUO">STATUS_QUO</option>
+            <option value="CYBER_ATTACK">CYBER_ATTACK</option>
+            <option value="SANCTIONS">SANCTIONS</option>
+            <option value="AIRSTRIKE">AIRSTRIKE</option>
+            <option value="INVASION">INVASION</option>
+            <option value="TACTICAL_NUKE">TACTICAL_NUKE</option>
+            <option value="STRATEGIC_NUKE">STRATEGIC_NUKE</option>
+          </select>
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="input-label" style={{ color: '#eb532d' }}>Actual Action (Covert/Overt Execution)</label>
+          <select className="bp-select" value={actual} onChange={e => setActual(e.target.value as ActionType)}>
+            <option value="DE_ESCALATE">DE_ESCALATE</option>
+            <option value="STATUS_QUO">STATUS_QUO</option>
+            <option value="CYBER_ATTACK">CYBER_ATTACK</option>
+            <option value="SANCTIONS">SANCTIONS</option>
+            <option value="AIRSTRIKE">AIRSTRIKE</option>
+            <option value="INVASION">INVASION</option>
+            <option value="TACTICAL_NUKE">TACTICAL_NUKE</option>
+            <option value="STRATEGIC_NUKE">STRATEGIC_NUKE</option>
+          </select>
+        </div>
+      </div>
+      <button 
+        className="bp-btn bp-btn-primary" 
+        style={{ width: '100%', marginTop: '15px', justifyContent: 'center' }}
+        onClick={() => onSubmit({ declaredAction: declared, actualAction: actual, reasoning: 'Manual TOC override protocol.', confidence: 100 })}
+      >
+        <Key size={14} /> AUTHORIZE {side.toUpperCase()} DIRECTIVE
+      </button>
+    </div>
+  );
+};
+
+const StatSlider = ({ label, value, onChange, disabled }: { label: string, value: number, onChange: (v: number) => void, disabled?: boolean }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.65rem', marginBottom: '4px' }}>
+    <span style={{ width: '80px', color: '#8a9ba8' }}>{label}</span>
+    <input type="range" min="0" max="100" value={value} onChange={e => onChange(parseInt(e.target.value))} style={{ flex: 1, accentColor: 'var(--bp-cobalt-blue)' }} disabled={disabled} />
+    <span style={{ width: '30px', textAlign: 'right', fontWeight: 'bold' }}>{value}</span>
+  </div>
+);
+
 const POPULAR_MODELS = [
   { name: 'GPT-5.4 Mini', modelId: 'openai/gpt-5.4-mini', type: 'chatgpt' as ModelType },
   { name: 'Claude Sonnet 4.6', modelId: 'anthropic/claude-sonnet-4.6', type: 'claude' as ModelType },
@@ -29,6 +93,7 @@ const POPULAR_MODELS = [
   { name: 'ChatGPT-4o Mini (Legacy)', modelId: 'openai/gpt-4o-mini', type: 'chatgpt' as ModelType },
   { name: 'Claude 3.5 Sonnet (Legacy)', modelId: 'anthropic/claude-3.5-sonnet', type: 'claude' as ModelType },
   { name: 'Gemini 1.5 Pro (Legacy)', modelId: 'google/gemini-pro-1.5', type: 'gemini' as ModelType },
+  { name: 'Human Commander', modelId: 'human', type: 'human' as ModelType },
 ];
 
 interface GamePreset {
@@ -588,6 +653,11 @@ export default function App() {
   const [threatEvents, setThreatEvents] = useState<ThreatEvent[]>([]);
   const [liveNews, setLiveNews] = useState<NewsArticle[]>([]);
 
+  // Human Interface State
+  const [awaitingHumanInput, setAwaitingHumanInput] = useState<'alpha' | 'beta' | 'both' | null>(null);
+  const [humanDecisionAlpha, setHumanDecisionAlpha] = useState<TurnDecision | null>(null);
+  const [humanDecisionBeta, setHumanDecisionBeta] = useState<TurnDecision | null>(null);
+
   // Simulation telemetry stats
   const [simulationUptime, setSimulationUptime] = useState(0);
   const [fpsVal, setFpsVal] = useState(60);
@@ -639,29 +709,57 @@ export default function App() {
   const runTurn = async () => {
     if (gameState.status === 'gameover' || isFetching || isAnimating) return;
 
+    const alphaIsHuman = config.modelAlpha.type === 'human';
+    const betaIsHuman = config.modelBeta.type === 'human';
+
+    // If a human is playing but hasn't submitted their decision yet, pause simulation.
+    if ((alphaIsHuman && !humanDecisionAlpha) || (betaIsHuman && !humanDecisionBeta)) {
+      setIsRunning(false);
+      if (alphaIsHuman && betaIsHuman) setAwaitingHumanInput('both');
+      else if (alphaIsHuman) setAwaitingHumanInput('alpha');
+      else setAwaitingHumanInput('beta');
+      addTerminalLine(`[AWAITING] Operation halted. Awaiting manual override from TOC...`, 'warning');
+      return;
+    }
+
+    setAwaitingHumanInput(null);
+
     setIsFetching(true);
     const targetRound = gameState.round + 1;
     addTerminalLine(`[OP_CON] COMMENCING COGNITIVE DECISION LOOP: ROUND ${targetRound}`, 'system');
-    addTerminalLine(`Querying OpenRouter API endpoints...`, 'info');
+    addTerminalLine(`Querying Cognitive Command nodes...`, 'info');
 
     try {
       let alphaDecision: TurnDecision;
       let betaDecision: TurnDecision;
 
-      if (config.useMock) {
-        // Fetch decisions from Mock behavior simulator
-        await new Promise(resolve => setTimeout(resolve, 800));
-        alphaDecision = getMockDecision(config.modelAlpha.type, true, gameState, config);
-        betaDecision = getMockDecision(config.modelBeta.type, false, gameState, config);
+      const promises: Promise<TurnDecision>[] = [];
+
+      // Alpha Request
+      if (alphaIsHuman) {
+        promises.push(Promise.resolve(humanDecisionAlpha!));
+      } else if (config.useMock) {
+        promises.push(new Promise(resolve => setTimeout(() => resolve(getMockDecision(config.modelAlpha.type, true, gameState, config)), 800)));
       } else {
-        // Fetch decisions from live OpenRouter API
-        const responses = await Promise.all([
-          fetchModelDecision(true, gameState, config, liveNews),
-          fetchModelDecision(false, gameState, config, liveNews)
-        ]);
-        alphaDecision = responses[0];
-        betaDecision = responses[1];
+        promises.push(fetchModelDecision(true, gameState, config, liveNews));
       }
+
+      // Beta Request
+      if (betaIsHuman) {
+        promises.push(Promise.resolve(humanDecisionBeta!));
+      } else if (config.useMock) {
+        promises.push(new Promise(resolve => setTimeout(() => resolve(getMockDecision(config.modelBeta.type, false, gameState, config)), 800)));
+      } else {
+        promises.push(fetchModelDecision(false, gameState, config, liveNews));
+      }
+
+      const responses = await Promise.all(promises);
+      alphaDecision = responses[0];
+      betaDecision = responses[1];
+
+      // Clear manual human states after processing
+      setHumanDecisionAlpha(null);
+      setHumanDecisionBeta(null);
 
       setIsFetching(false);
       
@@ -1142,6 +1240,38 @@ export default function App() {
                   </select>
                 </div>
 
+                <div className="input-group" style={{ marginTop: '10px' }}>
+                  <label className="input-label" style={{ color: 'var(--bp-cobalt-blue)' }}>Alpha HQ / Silo Location (Lat, Lng)</label>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <input type="number" step="any" className="bp-text" value={config.alphaHQCoords[0]} onChange={e => setConfig(prev => ({...prev, alphaHQCoords: [parseFloat(e.target.value), prev.alphaHQCoords[1]]}))} disabled={gameState.status === 'playing'} />
+                    <input type="number" step="any" className="bp-text" value={config.alphaHQCoords[1]} onChange={e => setConfig(prev => ({...prev, alphaHQCoords: [prev.alphaHQCoords[0], parseFloat(e.target.value)]}))} disabled={gameState.status === 'playing'} />
+                  </div>
+                </div>
+
+                <div className="bp-card" style={{ padding: '8px', marginBottom: '15px', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--bp-cobalt-blue)', marginBottom: '8px', fontWeight: 'bold' }}>Alpha Starting Variables</div>
+                  <StatSlider label="Military" value={config.alphaStartStats!.military} onChange={v => setConfig(p => ({...p, alphaStartStats: {...p.alphaStartStats!, military: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Economy" value={config.alphaStartStats!.economy} onChange={v => setConfig(p => ({...p, alphaStartStats: {...p.alphaStartStats!, economy: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Stability" value={config.alphaStartStats!.stability} onChange={v => setConfig(p => ({...p, alphaStartStats: {...p.alphaStartStats!, stability: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Air Defense" value={config.alphaStartStats!.airDefense} onChange={v => setConfig(p => ({...p, alphaStartStats: {...p.alphaStartStats!, airDefense: v}}))} disabled={gameState.status === 'playing'} />
+                </div>
+
+                <div className="input-group" style={{ marginTop: '10px' }}>
+                  <label className="input-label" style={{ color: 'var(--bp-crimson-red)' }}>Beta HQ / Silo Location (Lat, Lng)</label>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <input type="number" step="any" className="bp-text" value={config.betaHQCoords[0]} onChange={e => setConfig(prev => ({...prev, betaHQCoords: [parseFloat(e.target.value), prev.betaHQCoords[1]]}))} disabled={gameState.status === 'playing'} />
+                    <input type="number" step="any" className="bp-text" value={config.betaHQCoords[1]} onChange={e => setConfig(prev => ({...prev, betaHQCoords: [prev.betaHQCoords[0], parseFloat(e.target.value)]}))} disabled={gameState.status === 'playing'} />
+                  </div>
+                </div>
+
+                <div className="bp-card" style={{ padding: '8px', marginBottom: '15px', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--bp-crimson-red)', marginBottom: '8px', fontWeight: 'bold' }}>Beta Starting Variables</div>
+                  <StatSlider label="Military" value={config.betaStartStats!.military} onChange={v => setConfig(p => ({...p, betaStartStats: {...p.betaStartStats!, military: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Economy" value={config.betaStartStats!.economy} onChange={v => setConfig(p => ({...p, betaStartStats: {...p.betaStartStats!, economy: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Stability" value={config.betaStartStats!.stability} onChange={v => setConfig(p => ({...p, betaStartStats: {...p.betaStartStats!, stability: v}}))} disabled={gameState.status === 'playing'} />
+                  <StatSlider label="Air Defense" value={config.betaStartStats!.airDefense} onChange={v => setConfig(p => ({...p, betaStartStats: {...p.betaStartStats!, airDefense: v}}))} disabled={gameState.status === 'playing'} />
+                </div>
+
                 <div className="input-group">
                   <label className="input-label">Geopolitical Context</label>
                   <select 
@@ -1269,40 +1399,54 @@ export default function App() {
               />
 
               {/* Simulation Playback Bar */}
-              <div className="bp-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bp-bg-page)', padding: '10px 14px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span className="system-tag" style={{ background: '#202b33', color: '#fff' }}>ROUND {gameState.round}</span>
-                  {config.hasDeadline && (
-                    <span className="system-tag" style={{ background: 'rgba(219, 55, 55, 0.15)', color: 'var(--bp-crimson-red)', border: '1px solid rgba(219, 55, 55, 0.3)' }}>
-                      DEADLINE: R{config.deadlineRound} ({config.deadlineRound - gameState.round} turns left)
-                    </span>
+              {awaitingHumanInput ? (
+                <>
+                  {(awaitingHumanInput === 'alpha' || awaitingHumanInput === 'both') && !humanDecisionAlpha && (
+                    <HumanActionPanel side="alpha" onSubmit={d => { setHumanDecisionAlpha(d); if (awaitingHumanInput === 'alpha') runTurn(); }} />
                   )}
-                </div>
+                  {(awaitingHumanInput === 'beta' || awaitingHumanInput === 'both') && humanDecisionAlpha && !humanDecisionBeta && (
+                    <HumanActionPanel side="beta" onSubmit={d => { setHumanDecisionBeta(d); runTurn(); }} />
+                  )}
+                  {awaitingHumanInput === 'beta' && !humanDecisionAlpha && !humanDecisionBeta && (
+                    <HumanActionPanel side="beta" onSubmit={d => { setHumanDecisionBeta(d); runTurn(); }} />
+                  )}
+                </>
+              ) : (
+                <div className="bp-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bp-bg-page)', padding: '10px 14px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span className="system-tag" style={{ background: '#202b33', color: '#fff' }}>ROUND {gameState.round}</span>
+                    {config.hasDeadline && (
+                      <span className="system-tag" style={{ background: 'rgba(219, 55, 55, 0.15)', color: 'var(--bp-crimson-red)', border: '1px solid rgba(219, 55, 55, 0.3)' }}>
+                        DEADLINE: R{config.deadlineRound} ({config.deadlineRound - gameState.round} turns left)
+                      </span>
+                    )}
+                  </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button 
-                    className="bp-btn bp-btn-primary" 
-                    disabled={isFetching || isAnimating || gameState.status === 'gameover'}
-                    onClick={runTurn}
-                  >
-                    {isFetching ? <RefreshCw className="logo-icon" style={{ animation: 'sweep 2s linear infinite' }} size={12} /> : <Zap size={12} />}
-                    {isFetching ? "Awaiting Decisions..." : isAnimating ? "Animating Clash..." : "Next Cycle Step"}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="bp-btn bp-btn-primary" 
+                      disabled={isFetching || isAnimating || gameState.status === 'gameover'}
+                      onClick={runTurn}
+                    >
+                      {isFetching ? <RefreshCw className="logo-icon" style={{ animation: 'sweep 2s linear infinite' }} size={12} /> : <Zap size={12} />}
+                      {isFetching ? "Awaiting Decisions..." : isAnimating ? "Animating Clash..." : "Next Cycle Step"}
+                    </button>
 
-                  <button 
-                    className="bp-btn" 
-                    disabled={isFetching || isAnimating || gameState.status === 'gameover'}
-                    onClick={() => setIsRunning(!isRunning)}
-                  >
-                    {isRunning ? <Pause size={12} /> : <Play size={12} />}
-                    {isRunning ? "Halt Operation" : "Auto-Run Operations"}
-                  </button>
-                  
-                  <button className="bp-btn" onClick={handleReset}>
-                    <RefreshCw size={12} /> Reset Console
-                  </button>
+                    <button 
+                      className="bp-btn" 
+                      disabled={isFetching || isAnimating || gameState.status === 'gameover'}
+                      onClick={() => setIsRunning(!isRunning)}
+                    >
+                      {isRunning ? <Pause size={12} /> : <Play size={12} />}
+                      {isRunning ? "Halt Operation" : "Auto-Run Operations"}
+                    </button>
+                    
+                    <button className="bp-btn" onClick={handleReset}>
+                      <RefreshCw size={12} /> Reset Console
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Right Sidebar: Telemetry charts & threat tickers */}
