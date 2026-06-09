@@ -70,7 +70,13 @@ const HumanActionPanel = ({
       <button 
         className="bp-btn bp-btn-primary" 
         style={{ width: '100%', marginTop: '15px', justifyContent: 'center' }}
-        onClick={() => onSubmit({ declaredAction: declared, actualAction: actual, reasoning: 'Manual TOC override protocol.', confidence: 100 })}
+        onClick={() => onSubmit({ 
+          crisisAssessment: 'System overridden by manual TOC command.',
+          opponentPrediction: 'Awaiting sensory network update.',
+          privateReasoning: 'Manual TOC directive executed.',
+          declaredAction: declared, 
+          actualAction: actual 
+        })}
       >
         <Key size={14} /> AUTHORIZE {side.toUpperCase()} DIRECTIVE
       </button>
@@ -1365,13 +1371,20 @@ export default function App() {
               </div>
               
               {liveNews.length > 0 && (
-                <div style={{ background: '#11171d', borderBottom: '1px solid #202b33', color: '#8a9ba8', padding: '6px 14px', fontSize: '0.75rem', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <Globe size={14} style={{ color: '#2965cc' }} />
-                  <span style={{ fontWeight: 700, color: '#2965cc', letterSpacing: '0.5px' }}>OSINT INTELLIGENCE:</span>
-                  <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                    <div style={{ display: 'inline-block', animation: 'marquee 35s linear infinite' }}>
+                <div style={{ background: 'linear-gradient(90deg, #0f161c 0%, #151f28 50%, #0f161c 100%)', borderBottom: '1px solid #202b33', color: '#8a9ba8', padding: '6px 14px', fontSize: '0.75rem', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <Globe size={14} style={{ color: '#2965cc', flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, color: '#2965cc', letterSpacing: '0.5px', flexShrink: 0 }}>OSINT INTELLIGENCE:</span>
+                  <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+                    <div style={{ display: 'inline-block', animation: 'marquee 50s linear infinite' }}>
                       {liveNews.map((n, i) => (
                         <span key={i} style={{ marginRight: '50px' }}>
+                          <span style={{ color: '#eb532d', marginRight: '5px' }}>[{new Date(n.pubDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span> 
+                          {n.title}
+                        </span>
+                      ))}
+                      {/* Duplicate for seamless infinite loop */}
+                      {liveNews.map((n, i) => (
+                        <span key={`dup-${i}`} style={{ marginRight: '50px' }}>
                           <span style={{ color: '#eb532d', marginRight: '5px' }}>[{new Date(n.pubDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span> 
                           {n.title}
                         </span>
