@@ -18,6 +18,8 @@ import { getMockDecision } from './llm/mock';
 import { fetchModelDecision } from './llm/openrouter';
 import { fetchLiveNews } from './llm/newsFetcher';
 import type { NewsArticle } from './llm/newsFetcher';
+import { audioSystem } from './audio';
+import { TypewriterLog } from './components/TypewriterLog';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -234,8 +236,9 @@ function TacticalMap({
   alphaHQCoords,
   betaHQName,
   betaHQCoords,
-  sidebarCollapsed
-}: TacticalMapProps) {
+  sidebarCollapsed,
+  globalTension
+}: TacticalMapProps & { globalTension: number }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   
@@ -439,7 +442,7 @@ function TacticalMap({
       <div ref={mapRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }} />
 
       {/* Cinematic CRT and Vignette Overlays */}
-      <div className="vignette-overlay" />
+      <div className={`vignette-overlay ${globalTension > 80 ? 'tension-critical' : ''}`} />
       <div className="crt-scanlines" />
 
       {/* Grid line overlay */}
@@ -643,6 +646,8 @@ export default function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [currentTypingText, setCurrentTypingText] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [setupTab, setSetupTab] = useState<'presets' | 'custom' | 'rules'>('presets');
   
@@ -768,6 +773,23 @@ export default function App() {
       setHumanDecisionBeta(null);
 
       setIsFetching(false);
+
+      // CINEMATIC TYPEWRITER PHASE
+      setIsTyping(true);
+      const textToType = `[ALPHA TOC REASONING]: ${alphaDecision.privateReasoning}\n\n[BETA TOC REASONING]: ${betaDecision.privateReasoning}`;
+      setCurrentTypingText(textToType);
+      
+      // Calculate delay based on character length (25ms per char) + 1 second padding
+      const typingTime = (textToType.length * 25) + 1000;
+      await new Promise(resolve => setTimeout(resolve, typingTime));
+      setIsTyping(false);
+      setCurrentTypingText("");
+
+      // AUDIO TRIGGER FOR LAUNCHES
+      const actions = [alphaDecision.actualAction, betaDecision.actualAction];
+      if (actions.some(a => a.includes('NUKE') || a.includes('STRIKE'))) {
+        audioSystem.playSiren();
+      }
       
       // ENTER VISUAL ANIMATION STAGE
       setIsAnimating(true);
@@ -784,6 +806,15 @@ export default function App() {
       // RESOLVE MATHEMATICALLY
       const nextState = resolveTurn(gameState, alphaDecision, betaDecision, config);
       const currentLog = nextState.history[nextState.history.length - 1];
+
+      // Play explosion audio and screen shake if a kinetic strike landed
+      const hasExplosion = currentLog.events.some(e => e.includes('DETONATION') || e.includes('INVASION') || e.includes('AIRSTRIKES'));
+      if (hasExplosion) {
+        audioSystem.playExplosion();
+        // The screen shake class is added dynamically via DOM below
+        document.body.classList.add('screen-shake-active');
+        setTimeout(() => document.body.classList.remove('screen-shake-active'), 500);
+      }
 
       // Deception warnings
       if (alphaDecision.declaredAction !== alphaDecision.actualAction) {
@@ -828,6 +859,7 @@ export default function App() {
       addTerminalLine(`[ERROR] Operations loop exception: ${err.message || err}`, 'danger');
       setIsRunning(false);
       setIsAnimating(false);
+      setIsTyping(false);
       setIsFetching(false);
       setPendingAlphaAct(null);
       setPendingBetaAct(null);
@@ -836,7 +868,7 @@ export default function App() {
 
   // Auto-play game loop
   useEffect(() => {
-    if (isRunning && !isFetching && !isAnimating && gameState.status === 'playing') {
+    if (isRunning && !isFetching && !isAnimating && !isTyping && gameState.status === 'playing') {
       runTimerRef.current = setTimeout(() => {
         runTurn();
       }, 1000);
@@ -845,10 +877,11 @@ export default function App() {
     return () => {
       if (runTimerRef.current) clearTimeout(runTimerRef.current);
     };
-  }, [isRunning, isFetching, isAnimating, gameState]);
+  }, [isRunning, isFetching, isAnimating, isTyping, gameState]);
 
   // Launch preset directly
-  const handleLoadPreset = (preset: GamePreset) => {
+  const handleLoadPreset = (preset: typeof CONFLICT_PRESETS[0]) => {
+    audioSystem.init(); 
     if (!preset.useMock && !config.apiKey) {
       addTerminalLine("ERROR: OpenRouter API key required to launch live preset.", "danger");
       setShowKeyModal(true);
@@ -901,6 +934,7 @@ export default function App() {
 
   const handleStartCustomGame = (e: React.FormEvent) => {
     e.preventDefault();
+    audioSystem.init(); 
     if (!config.useMock && !config.apiKey) {
       addTerminalLine("ERROR: API key required for Live OpenRouter mode.", "danger");
       setShowKeyModal(true);
@@ -1409,7 +1443,35 @@ export default function App() {
                 betaHQName={config.betaHQName}
                 betaHQCoords={config.betaHQCoords}
                 sidebarCollapsed={sidebarCollapsed}
+                globalTension={gameState.globalTension}
               />
+
+              {/* Cinematic Typewriter Overlay */}
+              {isTyping && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'rgba(16, 22, 26, 0.9)',
+                  border: '1px solid var(--bp-cobalt-blue)',
+                  boxShadow: '0 0 40px rgba(19, 124, 189, 0.3)',
+                  padding: '20px',
+                  width: '80%',
+                  maxWidth: '700px',
+                  zIndex: 500,
+                  backdropFilter: 'blur(10px)',
+                  color: 'var(--bp-text-primary)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', borderBottom: '1px solid #293742', paddingBottom: '10px' }}>
+                    <ShieldAlert size={18} style={{ color: 'var(--bp-amber-orange)' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--bp-amber-orange)' }}>INTERCEPTED COGNITIVE STREAM</span>
+                  </div>
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '0.85rem' }}>
+                    <TypewriterLog text={currentTypingText} speed={25} />
+                  </div>
+                </div>
+              )}
 
               {/* Simulation Playback Bar */}
               {awaitingHumanInput ? (
